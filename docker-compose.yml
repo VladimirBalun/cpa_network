@@ -1,0 +1,21 @@
+version: "3.8"
+volumes:
+  vidly:
+services:
+  server:
+    build: ./server
+    ports:
+      - 8080:8080
+  database:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cpa-network
+    ports:
+      - 3307:3307
+    volumes:
+      - vidly:/data/db
+  #website:
+
+  
