@@ -1,13 +1,16 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
 	router := mux.NewRouter()
+	router.Path("/metrics").Handler(promhttp.Handler())
 	err := http.ListenAndServe("127.0.0.1:8080", router)
 	if err != nil {
 		log.Fatalf("failed to listen and serve: %s", err.Error())
