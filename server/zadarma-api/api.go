@@ -4,20 +4,11 @@ import (
 	"net/http"
 	"net/url"
 
-	"crypto/md5"
-	"crypto/sha1"
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
-	"sort"
-	"strings"
-	"unicode/utf8"
-
-	"crypto/hmac"
 	"log"
 )
 
-type APIClient struct {
+type apiClient struct {
 	Key    string
 	Secret string
 }
@@ -30,7 +21,7 @@ const (
 
 const API_URL = "https://api.zadarma.com/"
 
-func (api APIClient) CallMethod(methodName string, params url.Values, methodType string) interface{} {
+func (api apiClient) CallMethod(methodName string, params url.Values, methodType string) interface{} {
 	client := http.Client{}
 
 	fullURL := BuildAPIUrl(methodName, params)
@@ -55,7 +46,18 @@ func (api APIClient) CallMethod(methodName string, params url.Values, methodType
 	return result
 }
 
-func (api APIClient) Callback(from, to, sip string, isPredicted bool) interface{} {
+func (api apiClient) ChangeCallerID(sip, callerID string) interface{} {
+	params := make(url.Values)
+	params.Add("id", sip)
+	params.Add("number", callerID)
+	return api.CallMethod("/v1/sip/callerid/", params, METHOD_PUT)
+}
+
+func (api apiClient) DirectNumbers() interface{} {
+	return api.CallMethod("/v1/direct_numbers/", nil, METHOD_GET)
+}
+
+func (api apiClient) Callback(from, to, sip string, isPredicted bool) interface{} {
 	params := make(url.Values)
 	params.Add("from", from)
 	params.Add("to", to)
@@ -69,68 +71,10 @@ func (api APIClient) Callback(from, to, sip string, isPredicted bool) interface{
 	return api.CallMethod("/v1/request/callback/", params, METHOD_GET)
 }
 
-func (api APIClient) ChangeCallerID(sip, callerID string) interface{} {
-	params := make(url.Values)
-	params.Add("id", sip)
-	params.Add("number", callerID)
-	return api.CallMethod("/v1/sip/callerid/", params, METHOD_PUT)
-}
-
-func (api APIClient) DirectNumbers() interface{} {
-	return api.CallMethod("/v1/direct_numbers/", nil, METHOD_GET)
-}
-
-//func (api APIClient) SIMs() interface{} {
-//	return api.CallMethod("/v1/sim/", nil, METHOD_GET)
-//}
-
-func BuildAPIUrl(methodName string, params url.Values) string {
-	var resultURL string
-
-	if strings.HasPrefix(methodName, "/") && strings.HasSuffix(API_URL, "/") {
-		resultURL = API_URL + strings.TrimLeft(methodName, "/") + "?"
-	} else {
-		resultURL = API_URL + methodName + "?"
-	}
-
-	for name, value := range params {
-		resultURL += name + "=" + value[0] + "&"
-	}
-
-	resultURL = strings.TrimRight(resultURL, "&")
-	return resultURL
-}
-
-func Sign(api APIClient, methodName string, params url.Values) string {
-	var paramParts []string
-	for name, value := range params {
-		paramParts = append(paramParts, name+"="+value[0])
-	}
-
-	sort.Slice(paramParts, func(i, j int) bool {
-		firstRune, _ := utf8.DecodeRuneInString(paramParts[i])
-		secondRune, _ := utf8.DecodeRuneInString(paramParts[j])
-
-		return firstRune < secondRune
-	})
-
-	paramsUrlStr := strings.Join(paramParts, "&")
-
-	md5Params := fmt.Sprintf("%x", md5.Sum([]byte(paramsUrlStr)))
-
-	sign := methodName + paramsUrlStr + md5Params
-	hmacer := hmac.New(sha1.New, []byte(api.Secret))
-	hmacer.Write([]byte(sign))
-	sha1Result := hmacer.Sum(nil)
-	sha1Hash := fmt.Sprintf("%x", sha1Result)
-
-	base64Encoded := base64.StdEncoding.EncodeToString([]byte(sha1Hash))
-
-	return base64Encoded
-}
-
-func (api APIClient) GetTotalCalls(callerId string) interface{} {
+func (api apiClient) GetTotalCalls(callerId string, dateFrom string, dateTo string) interface{} {
 	params := make(url.Values)
 	params.Add("id", callerId)
+	params.Add("dateFrom", dateFrom)
+	params.Add("dateTo", dateTo)
 	return api.CallMethod("/v1/zcrm/calls", params, METHOD_GET)
 }
