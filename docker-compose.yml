@@ -12,5 +12,6 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: cpa-network
+      MYSQL_TCP_PORT: 3307
     ports:
       - 3307:3307
