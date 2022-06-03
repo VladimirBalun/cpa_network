@@ -13,13 +13,7 @@ type apiClient struct {
 	Secret string
 }
 
-const (
-	METHOD_GET  = "GET"
-	METHOD_PUT  = "PUT"
-	METHOD_POST = "POST"
-)
-
-const API_URL = "https://api.zadarma.com/"
+const ApiUrl = "https://api.zadarma.com/"
 
 func (api apiClient) CallMethod(methodName string, params url.Values, methodType string) interface{} {
 	client := http.Client{}
@@ -50,11 +44,11 @@ func (api apiClient) ChangeCallerID(sip, callerID string) interface{} {
 	params := make(url.Values)
 	params.Add("id", sip)
 	params.Add("number", callerID)
-	return api.CallMethod("/v1/sip/callerid/", params, METHOD_PUT)
+	return api.CallMethod("/v1/sip/callerid/", params, http.MethodPut)
 }
 
 func (api apiClient) DirectNumbers() interface{} {
-	return api.CallMethod("/v1/direct_numbers/", nil, METHOD_GET)
+	return api.CallMethod("/v1/direct_numbers/", nil, http.MethodGet)
 }
 
 func (api apiClient) Callback(from, to, sip string, isPredicted bool) interface{} {
@@ -68,13 +62,11 @@ func (api apiClient) Callback(from, to, sip string, isPredicted bool) interface{
 		params.Add("isPredicted", "1")
 	}
 
-	return api.CallMethod("/v1/request/callback/", params, METHOD_GET)
+	return api.CallMethod("/v1/request/callback/", params, http.MethodGet)
 }
 
-func (api apiClient) GetTotalCalls(callerId string, dateFrom string, dateTo string) interface{} {
+func (api apiClient) GetTotalCalls(callerId string) interface{} {
 	params := make(url.Values)
 	params.Add("id", callerId)
-	params.Add("dateFrom", dateFrom)
-	params.Add("dateTo", dateTo)
-	return api.CallMethod("/v1/zcrm/calls", params, METHOD_GET)
+	return api.CallMethod("/v1/zcrm/calls", params, http.MethodGet)
 }
